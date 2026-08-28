@@ -100,25 +100,82 @@ const login = async (req, res) => {
 };
 
 const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select("-password");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+  const user = await User.findById(req.user.userId).select("-password");
 
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    res.status(500).json({
+  if (!user) {
+    return res.status(404).json({
       success: false,
-      message: error.message,
+      message: "User not found",
     });
   }
+
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
 };
 
-module.exports = { register, login, getMe };
+const updateProfile = async (req, res, next) => {
+  const { name, email } = req.body;
+  const user = await User.findById(req.user.userId);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found ",
+    });
+  }
+  if (name !== undefined) {
+    user.name = name;
+  }
+  if (email !== undefined) {
+    user.email = email;
+  }
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Profile update successfully",
+    data: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+};
+
+const changePassword = async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user.userId);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+  const isPasswordCorrect = await bcrypt.compare(
+    currentPassword,
+    user.password,
+  );
+
+  if (!isPasswordCorrect) {
+    return res.status(401).json({
+      success: false,
+      message: "Current password is incorrect",
+    });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password change successfully",
+  });
+};
+
+module.exports = { register, login, getMe, updateProfile, changePassword };
