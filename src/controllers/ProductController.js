@@ -61,7 +61,20 @@ const getProductById = async (req, res) => {
 };
 
 const createProduct = async (req, res, next) => {
-  const products = await Product.create(req.body);
+  const { name, price, description, category, stock } = req.body;
+
+  const imageUrl = req.file
+    ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+    : null;
+
+  const products = await Product.create({
+    name,
+    price,
+    description,
+    category,
+    stock,
+    image:imageUrl,
+  });
 
   res.status(201).json({
     success: true,

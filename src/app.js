@@ -4,12 +4,14 @@ const categories = require("./routes/categoriesroutes");
 const authRoutes = require("./routes/authRoutes");
 const logger = require("./middleware/logger");
 const errorMiddleware = require("./middleware/errorMiddleware");
+const path = require("path");
 
 const app = express();
 
 app.use(express.json());
 
 app.use(logger);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categories);
