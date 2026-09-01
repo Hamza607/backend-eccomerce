@@ -30,7 +30,15 @@ router.post(
   asynchandler(createProduct),
 );
 
-router.put("/:id", auth, checkAdmin, asynchandler(updateProduct));
+router.put(
+  "/:id",
+  auth,
+  checkAdmin,
+  upload.single("image"),
+  productValidation,
+  validate,
+  asynchandler(updateProduct),
+);
 
 router.delete("/:id", auth, checkAdmin, asynchandler(deleteProduct));
 

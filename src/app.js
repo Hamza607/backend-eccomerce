@@ -1,6 +1,6 @@
 const express = require("express");
 const productRoutes = require("./routes/productroutes");
-const categories = require("./routes/categoriesroutes");
+const categories = require("./routes/categoryRoutes");
 const authRoutes = require("./routes/authRoutes");
 const logger = require("./middleware/logger");
 const errorMiddleware = require("./middleware/errorMiddleware");
