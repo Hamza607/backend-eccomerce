@@ -16,6 +16,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categories);
 app.use("/api/auth", authRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.get("/", (req, res) => {
   res.json({
