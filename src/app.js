@@ -2,6 +2,7 @@ const express = require("express");
 const productRoutes = require("./routes/productroutes");
 const categories = require("./routes/categoryRoutes");
 const authRoutes = require("./routes/authRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 const logger = require("./middleware/logger");
 const errorMiddleware = require("./middleware/errorMiddleware");
 const path = require("path");
