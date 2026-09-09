@@ -6,6 +6,7 @@ const {
   getOrderById,
   updateOrderStatus,
   getAllOrders,
+  cancelOrder,
 } = require("../controllers/orderController");
 const auth = require("../middleware/auth");
 const {
@@ -21,9 +22,10 @@ const router = express.Router();
 router.use(auth);
 
 router.post("/", createOrderValidator, validate, asyncHandler(createOrder));
-router.get("/my-orders", getMyOrders);
-router.get("/all-orders", getAllOrders);
-router.get("/:id", checkAdmin, getOrderById);
+router.get("/my-orders", asyncHandler(getMyOrders));
+router.get("/all-orders", asyncHandler(getAllOrders));
+router.get("/:id", checkAdmin, asyncHandler(getOrderById));
+router.put("/:id/cancel", auth, asyncHandler(cancelOrder));
 router.put(
   "/:id/status",
   checkAdmin,
