@@ -1,10 +1,11 @@
+const stripe = require("../utils/stripe");
 const Payment = require("../models/Payment");
 const Order = require("../models/Order");
 const AppError = require("../utils/AppError");
 
-const createPayment = async (req, res, next) => {
+const createStripePayment = async (req, res, next) => {
   try {
-    const { orderId, method } = req.body;
+    const { orderId } = req.body;
 
     const order = await Order.findById(orderId);
 
@@ -18,16 +19,30 @@ const createPayment = async (req, res, next) => {
       return next(new AppError(`ORder is already paid`, 400));
     }
 
+    // create stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: order.totalAmount * 100,
+      currency: "usd",
+      metadata: {
+        orderId: order._id.toString(),
+        userId: req.user,
+      },
+    });
+
     const payment = await Payment.create({
       order: order._id,
       user: req.user,
       amount: order.totalAmount,
-      method,
+      method: "stripe",
+      status: "pending",
+      transactionId: paymentIntent.id,
     });
+
     res.status(201).json({
       success: true,
-      message: "Payment initialized",
-      payment,
+      message: "Stripe Payment initialized",
+      paymentId: payment._id,
+      clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
     res.status(500).json({
@@ -37,7 +52,6 @@ const createPayment = async (req, res, next) => {
   }
 };
 
-
 module.exports = {
-  createPayment
-}
+  createStripePayment
+};
