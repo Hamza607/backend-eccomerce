@@ -5,11 +5,19 @@ const authRoutes = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
 const logger = require("./middleware/logger");
 const errorMiddleware = require("./middleware/errorMiddleware");
 const path = require("path");
 
 const app = express();
+
+// app.post(
+//   "/api/payments/stripe/webhook",
+//   express.raw({ type: "application/json" }),
+//   stripeWebhook,
+// );
 
 app.use(express.json());
 
@@ -22,6 +30,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/reviews", reviewRoutes);
+
+app.use("/api/wishlist", wishlistRoutes);
 
 app.get("/", (req, res) => {
   res.json({

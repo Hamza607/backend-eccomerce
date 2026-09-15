@@ -52,6 +52,97 @@ const createStripePayment = async (req, res, next) => {
   }
 };
 
+const stripeWebhook = async (req, res) => {
+  const signature =
+    req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: `Webhook Error: ${error.message}`,
+    });
+  }
+
+  try {
+    switch (event.type) {
+      case "payment_intent.succeeded": {
+        const paymentIntent = event.data.object;
+
+        const orderId =
+          paymentIntent.metadata.orderId;
+
+        const payment =
+          await Payment.findOne({
+            transactionId: paymentIntent.id,
+          });
+
+        if (!payment) {
+          console.log(
+            "Payment record not found"
+          );
+          break;
+        }
+
+        payment.status = "paid";
+        payment.paidAt = new Date();
+
+        await payment.save();
+
+        await Order.findByIdAndUpdate(
+          orderId,
+          {
+            paymentStatus: "paid",
+          }
+        );
+
+        break;
+      }
+
+      case "payment_intent.payment_failed": {
+        const paymentIntent =
+          event.data.object;
+
+        const payment =
+          await Payment.findOne({
+            transactionId: paymentIntent.id,
+          });
+
+        if (payment) {
+          payment.status = "failed";
+          await payment.save();
+        }
+
+        break;
+      }
+
+      default:
+        console.log(
+          `Unhandled event: ${event.type}`
+        );
+    }
+
+    res.json({
+      received: true,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Webhook processing failed",
+    });
+  }
+};
+
 module.exports = {
-  createStripePayment
+  createStripePayment,
+  stripeWebhook,
 };
