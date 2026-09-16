@@ -257,7 +257,7 @@ const getProduct = async (req, res, next) => {
   }
 };
 
-const getProductById = async (req, res) => {
+const getProductById = async (req, res,next) => {
   const product = await Product.findById(req.params.id).populate(
     "category",
     "name",
@@ -302,7 +302,7 @@ const createProduct = async (req, res, next) => {
   });
 };
 
-const updateProduct = async (req, res) => {
+const updateProduct = async (req, res,next) => {
   const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,

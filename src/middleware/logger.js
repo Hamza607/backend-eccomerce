@@ -1,10 +1,35 @@
-const logger = (req, res, next) => {
-  console.log("======= New Request ==========");
-  console.log("Method :", req.method);
-  console.log("URL :", req.originalUrl);
-  console.log("Time :", new Date().toLocaleString());
-  
-  next()
-};
+const winston = require("winston");
 
-module.exports = logger
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json(),
+  ),
+
+  transport: [
+    new winston.transports.Console(),
+
+    new winston.transports.File({
+      filename: "logs/error.log",
+      level: "error",
+    }),
+
+    new winston.transports.File({
+      filename: "logs/combined.log",
+    }),
+  ],
+});
+
+module.exports = logger;
+
+// const logger = (req, res, next) => {
+//   console.log("======= New Request ==========");
+//   console.log("Method :", req.method);
+//   console.log("URL :", req.originalUrl);
+//   console.log("Time :", new Date().toLocaleString());
+
+//   next()
+// };
+
+// module.exports = logger

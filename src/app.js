@@ -12,12 +12,12 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const logger = require("./middleware/logger");
+// const logger = require("./middleware/logger");
 const errorMiddleware = require("./middleware/errorMiddleware");
 const path = require("path");
 
 const apiLimiter = rateLimit({
-  widowMs: 15 * 60 * 100,
+  windowMs: 15 * 60 * 100,
   limit: 100,
   message: {
     success: false,
@@ -47,7 +47,7 @@ app.use("/api", apiLimiter);
 // );
 
 app.use(express.json());
-app.use(logger);
+// app.use(logger);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use("/api/products", productRoutes);
