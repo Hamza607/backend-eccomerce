@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 
 const User = require("../models/User");
 
@@ -177,5 +178,25 @@ const changePassword = async (req, res, next) => {
     message: "Password change successfully",
   });
 };
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
 
-module.exports = { register, login, getMe, updateProfile, changePassword };
+  limit: 10,
+
+  message: {
+    success: false,
+    message: "Too many login attempts. Please try again later.",
+  },
+
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
+module.exports = {
+  register,
+  login,
+  getMe,
+  updateProfile,
+  changePassword,
+  loginLimiter,
+};

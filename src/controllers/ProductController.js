@@ -84,6 +84,23 @@ const getProduct = async (req, res, next) => {
     const { search, category, minPrice, maxPrice, minRating, inStock, sort } =
       req.query;
 
+    const allowedSorts = [
+      "price_asc",
+      "price_desc",
+      "rating",
+      "name_asc",
+      "name_desc",
+      "newest",
+      "oldest",
+    ];
+
+    if (sort && !allowedSorts.includes(sort)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid sort option",
+      });
+    }
+
     const page = Math.max(Number(req.query.page) || 1, 1);
 
     const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);

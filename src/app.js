@@ -1,4 +1,8 @@
 const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
+
 const productRoutes = require("./routes/productroutes");
 const categories = require("./routes/categoryRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -12,7 +16,29 @@ const logger = require("./middleware/logger");
 const errorMiddleware = require("./middleware/errorMiddleware");
 const path = require("path");
 
+const apiLimiter = rateLimit({
+  widowMs: 15 * 60 * 100,
+  limit: 100,
+  message: {
+    success: false,
+    message: "Too many request,  please try again later.",
+  },
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
 const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
+
+app.use("/api", apiLimiter);
 
 // app.post(
 //   "/api/payments/stripe/webhook",
@@ -21,7 +47,6 @@ const app = express();
 // );
 
 app.use(express.json());
-
 app.use(logger);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 

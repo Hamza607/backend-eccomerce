@@ -5,6 +5,7 @@ const {
   getMe,
   updateProfile,
   changePassword,
+  loginLimiter,
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 const validate = require("../middleware/validate");
@@ -20,7 +21,7 @@ const router = express.Router();
 
 router.post("/register", registerValidation, validate, register);
 
-router.post("/login", loginValidation, validate, login);
+router.post("/login", loginLimiter, loginValidation, validate, login);
 
 router.get("/me", auth, asynchandler(getMe));
 
