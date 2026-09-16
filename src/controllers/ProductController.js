@@ -84,6 +84,12 @@ const getProduct = async (req, res, next) => {
     const { search, category, minPrice, maxPrice, minRating, inStock, sort } =
       req.query;
 
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+
+    const skip = (page - 1) * limit;
+
     // Base filter
     const filter = {};
 
@@ -202,14 +208,32 @@ const getProduct = async (req, res, next) => {
         message: "Rating must be between 0 and 5",
       });
     }
-    const products = await Product.find(filter)
-      .populate("category", "name")
-      .sort(sortOption);
+
+    // Total matching products
+    const [totalProducts, products] = await Promise.all([
+      Product.countDocuments(filter),
+
+      Product.find(filter)
+        .populate("category", "name")
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const totalPages = Math.ceil(totalProducts / limit);
 
     res.status(200).json({
       success: true,
-      count: products.length,
       data: products,
+      pagination: {
+        currentPage: page,
+        limit,
+        totalProducts,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     next(error);
