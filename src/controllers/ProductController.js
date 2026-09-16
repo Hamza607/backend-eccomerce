@@ -3,81 +3,217 @@ const AppError = require("../utils/AppError");
 const fs = require("fs");
 const path = require("path");
 
-const getProduct = async (req, res) => {
-  const {
-    search,
-    category,
-    minPrice,
-    maxPrice,
-    inStock,
-    page = 1,
-    limit = 10,
-    sort = "-createdAt",
-  } = req.query;
+// const getProduct = async (req, res) => {
+//   const {
+//     search,
+//     category,
+//     minPrice,
+//     maxPrice,
+//     inStock,
+//     page = 1,
+//     limit = 10,
+//     sort = "-createdAt",
+//   } = req.query;
 
-  const query = {};
+//   const query = {};
 
-  //search
-  if (search) {
-    query.name = {
-      $regex: search,
-      $options: "i",
+//   //search
+//   if (search) {
+//     query.name = {
+//       $regex: search,
+//       $options: "i",
+//     };
+//   }
+
+//   if (minPrice || maxPrice) {
+//     query.price = {};
+
+//     if (minPrice) {
+//       query.price.$gte = Number(minPrice);
+//     }
+
+//     if (maxPrice) {
+//       query.price.$lte = Number(maxPrice);
+//     }
+//   }
+//   if (inStock === "true") {
+//     query.stock = { $gt: 0 };
+//   }
+
+//   if (category) {
+//     query.category = category;
+//   }
+//   //pagination
+//   const currentPage = Number(page);
+//   const productLimit = Number(limit);
+
+//   const skip = (currentPage - 1) * productLimit;
+//   //databse query
+//   let products = await Product.find(query)
+//     .populate("category", "name")
+//     .sort(sort)
+//     .skip(skip)
+//     .limit(productLimit);
+
+//   //total products
+//   const totalProducts = await Product.countDocuments(query);
+
+//   // Image URL add karna
+//   const productsWithUrl = products.map((product) => ({
+//     ...product.toObject(),
+
+//     image: product.image
+//       ? `${req.protocol}://${req.get("host")}/uploads/${product.image}`
+//       : null,
+//   }));
+
+//   res.status(200).json({
+//     success: true,
+//     data: productsWithUrl,
+//     pagination: {
+//       total: totalProducts,
+//       page: currentPage,
+//       limit: productLimit,
+//       totalPages: Math.ceil(totalProducts / productLimit),
+//     },
+//   });
+// };
+
+const getProduct = async (req, res, next) => {
+  try {
+    const { search, category, minPrice, maxPrice, minRating, inStock, sort } =
+      req.query;
+
+    // Base filter
+    const filter = {};
+
+    // Search
+    if (search) {
+      filter.$or = [
+        {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+    // Category
+    if (category) {
+      filter.category = category;
+    }
+
+    // Price filter
+    if (minPrice || maxPrice) {
+      filter.price = {};
+
+      if (minPrice) {
+        filter.price.$gte = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        filter.price.$lte = Number(maxPrice);
+      }
+    }
+
+    // Rating filter
+    if (minRating) {
+      filter.rating = {
+        $gte: Number(minRating),
+      };
+    }
+
+    // Stock filter
+    if (inStock === "true") {
+      filter.stock = {
+        $gt: 0,
+      };
+    }
+
+    if (inStock === "false") {
+      filter.stock = 0;
+    }
+
+    // Sorting
+    let sortOption = {
+      createdAt: -1,
     };
-  }
 
-  
-  if (minPrice || maxPrice) {
-    query.price = {};
-
-    if (minPrice) {
-      query.price.$gte = Number(minPrice);
+    if (sort === "price_asc") {
+      sortOption = {
+        price: 1,
+      };
     }
 
-    if (maxPrice) {
-      query.price.$lte = Number(maxPrice);
+    if (sort === "price_desc") {
+      sortOption = {
+        price: -1,
+      };
     }
+
+    if (sort === "rating") {
+      sortOption = {
+        rating: -1,
+      };
+    }
+
+    if (sort === "newest") {
+      sortOption = {
+        createdAt: -1,
+      };
+    }
+
+    if (sort === "oldest") {
+      sortOption = {
+        createdAt: 1,
+      };
+    }
+
+    if (minPrice && isNaN(Number(minPrice))) {
+      return res.status(400).json({
+        success: false,
+        message: "minPrice must be a valid number",
+      });
+    }
+
+    if (maxPrice && isNaN(Number(maxPrice))) {
+      return res.status(400).json({
+        success: false,
+        message: "maxPrice must be a valid number",
+      });
+    }
+
+    if (minRating && isNaN(Number(minRating))) {
+      return res.status(400).json({
+        success: false,
+        message: "minRating must be a valid number",
+      });
+    }
+
+    if (minRating && (Number(minRating) < 0 || Number(minRating) > 5)) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating must be between 0 and 5",
+      });
+    }
+    const products = await Product.find(filter)
+      .populate("category", "name")
+      .sort(sortOption);
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      data: products,
+    });
+  } catch (error) {
+    next(error);
   }
-  if (inStock === "true") {
-    query.stock = { $gt: 0 };
-  }
-  
-  if (category) {
-    query.category = category;
-  }
-  //pagination
-  const currentPage = Number(page);
-  const productLimit = Number(limit);
-
-  const skip = (currentPage - 1) * productLimit;
-  //databse query
-  let products = await Product.find(query)
-    .populate("category", "name")
-    .sort(sort)
-    .skip(skip)
-    .limit(productLimit);
-
-  //total products
-  const totalProducts = await Product.countDocuments(query);
-
-  // Image URL add karna
-  const productsWithUrl = products.map((product) => ({
-    ...product.toObject(),
-
-    image: product.image
-      ? `${req.protocol}://${req.get("host")}/uploads/${product.image}`
-      : null,
-  }));
-
-  res.status(200).json({
-    success: true,
-    data: productsWithUrl,
-    pagination: {
-      total: totalProducts,
-      page: currentPage,
-      limit: productLimit,
-      totalPages: Math.ceil(totalProducts / productLimit),
-    },
-  });
 };
 
 const getProductById = async (req, res) => {
