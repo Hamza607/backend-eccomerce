@@ -17,7 +17,7 @@ const errorMiddleware = require("./middleware/errorMiddleware");
 const path = require("path");
 
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 100,
+  windowMs: 15 * 60 * 1000,
   limit: 100,
   message: {
     success: false,
@@ -40,6 +40,12 @@ app.use(
 
 app.use("/api", apiLimiter);
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Ecommerce API is running",
+  });
+});
 // app.post(
 //   "/api/payments/stripe/webhook",
 //   express.raw({ type: "application/json" }),
