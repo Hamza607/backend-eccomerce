@@ -16,7 +16,7 @@ const addToWishList = async (req, res, next) => {
 
     const wishlist = await Wishlist.findOneAndUpdate(
       { user: req.user },
-      { $addToSet: { product: productId } },
+      { $addToSet: { products: productId } },
       { new: true, upsert: true },
     );
 
